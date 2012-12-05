@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>1E Movie Cabal Presents</title>
+
+	<style>
+	html {
+		width: 600px;
+		background: rgb(50, 50, 50);
+		color: rgb(200, 200, 200);
+		margin: auto;
+		font-family: "Menlo", "Andale Mono", "Courier New", monospace;
+	}
+
+	</style>
+
+	<script src="http://canvg.googlecode.com/svn/trunk/rgbcolor.js"></script> 
+	<script src="http://canvg.googlecode.com/svn/trunk/canvg.js"></script> 
+	<script src="./js/MIDI/audioDetect.js" type="text/javascript"></script>
+	<script src="./js/MIDI/loadPlugin.js" type="text/javascript"></script>
+	<script src="./js/MIDI/Plugin.js" type="text/javascript"></script>
+	<script src="./js/MIDI/Player.js" type="text/javascript"></script>
+	<script src="./js/Window/DOMLoader.XMLHttp.js" type="text/javascript"></script>
+	<script src="./js/Window/DOMLoader.script.js" type="text/javascript"></script>
+	<script src="./js/Polyfill/Base64.js" type="text/javascript"></script>
+	<script src="./inc/base64binary.js" type="text/javascript"></script>
+
+	<script>
+
+	var flakes = [];
+	var special_flakes = [];
+	var notes = [62, 70, 69, 66, 67, 75, 74, 0,
+				 67, 75, 74, 72, 71, 80, 79, 0,
+				 79, 80, 79, 77, 75, 0,
+				 75, 77, 75, 74, 72, 0,
+				 71, 74, 75, 77, 0,
+				 72, 74, 76, 78, 0, 0,];
+	var note_idx = 0;
+	var note_gen_idx = 0;
+	var next_note_due = 60;
+
+	var frame = 0;
+	
+	window.onload = function() {
+		MIDI.loadPlugin(function(){});
+		render();
+		setInterval(render, 1.0 / 30.0);
+	}
+
+	function render() {
+		frame++;
+
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext("2d");
+		var width = canvas.width;
+		var height = canvas.height;
+		ctx.fillStyle = "rgb(50, 50, 50)";
+		ctx.fillRect(0, 0, width, height);
+
+		// Render the staff, and build the line coordinates
+		ctx.fillStyle = "rgb(180, 180, 180)";
+		ctx.drawSvg('GClef.svg', 25, height - 125, 40, 100);
+		var top = height - 35;
+		var bottom = height - 110;
+
+		for (var y = bottom; y < top; y += (top - bottom) / 5) {
+			ctx.fillRect(30, y, width - 60, 2);
+		}
+
+		// Add new flakes
+
+		for (var i = 0; i < 1; i++) {
+			var x = Math.random() * width;
+			var vx = (Math.random() - 0.5) * width / 2500.0;
+			var vy = (Math.random() - 0.5) * (height / 1600.0) + height / 1000.0;
+			var radius = Math.random() * 2.0;
+
+			var special = false;
+
+			var n = notes[note_gen_idx];
+			if (n == 0) n = 70;	// Time spacing notes as midway through staff
+			var target_line = top - (n - 60) * (top - bottom) / 15.0;
+			var arrival_time = frame + (target_line / vy);
+			
+			if (Math.abs(arrival_time - next_note_due) < 5 
+				|| next_note_due - frame < 100) {
+
+				snap_vy = target_line / (next_note_due - frame);
+				if (Math.abs(snap_vy - vy) < 5)
+					vy = snap_vy;
+
+				arrival_time = frame + (target_line / vy);
+
+				special = true;
+				radius = 3.0;
+
+				if (notes[note_gen_idx] == 0) {
+					radius = 0.1;
+				}
+
+				note_gen_idx = (note_gen_idx + 1) % notes.length;
+				next_note_due = arrival_time + 45;
+			}
+
+			var f = [x, 0, vx, vy, radius, special];
+			flakes.push(f);
+		}
+
+		// Render snowflakes
+
+		for (var i = 0; i < flakes.length; i++) {
+			var f = flakes[i];
+			ctx.beginPath();
+
+			if (! f[5])
+				ctx.fillStyle = "rgb(180, 180, 180)";
+			else
+				ctx.fillStyle = "rgb(255, 255, 255)";
+
+			ctx.arc(f[0], f[1], f[4], 0, 2*Math.PI, true);
+			ctx.fill();
+		}
+
+		// Position update
+
+		var n = notes[note_idx];
+		if (n == 0) n = 70;
+		var staff_line = top - (n - 60) * (top - bottom) / 15.0;
+
+		for (var i = 0; i < flakes.length; i++) {
+			var f = flakes[i];
+			f[0] += f[2];
+			f[1] += f[3];
+
+			// Play special flakes
+			if (f[5] && f[1] > staff_line) {
+
+				if (notes[note_idx] != 0)
+					MIDI.noteOn(0, notes[note_idx], 127, 0);
+
+				note_idx = (note_idx + 1) % notes.length;
+
+				f[5] = false;
+			}
+
+			if (f[1] > height) {
+				flakes.splice(i, 1);
+				i--;
+			}
+		}
+	}
+
+	</script>
+
+</head>
+
+<body>
+
+	<div id='title'><h1>1E Movie Cabal Presents:</h1></div>
+
+	<canvas id='canvas' width=600 height=400></canvas>
+
+	<div id='caption'>
+		<h2>Doctor Zhivago</h2>
+		Friday November 9, 8PM
+	</div>
+
+</body>
+
+</html>

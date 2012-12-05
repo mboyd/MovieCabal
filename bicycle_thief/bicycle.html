@@ -1,0 +1,107 @@
+<!Doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>1E Movie Cabal Presents</title>
+
+	<style>
+	html {
+		width: 500px;
+		margin: auto;
+		font-family: "Menlo", "Courier New", monospace;
+	}
+	</style>
+
+	<script>
+	var frames = 
+['                                           $"   *.          \n'+
+ '               d$$$$$$$P"                  $    J           \n'+
+ '                   ^$.                     4r  "            \n'+
+ '                   d"b                    .db               \n'+
+ '                  P   $                  e" $               \n'+
+ '         ..ec.. ."     *.              zP   $.zec..         \n'+
+ '     .^    .   3*b.     *.           .P" .@"4F      "4      \n'+
+ '   ."      .  d"  ^b.    *c        .$"  d".  $      .  %    \n'+
+ '  /..      . P      $.    "c      d"   @   . 3r    .    3   \n'+
+ ' 4    ... .eE........$r===e$$$$eeP    J     . *.. .      b  \n'+
+ ' $       $$$$$...    $   4$$$$$$$     F       d$$$.      4  \n'+
+ ' $       $$$$$    ...$   4$$$$$$$     L       *$$$"      4  \n'+
+ ' 4       . "      ""3P ===$$$$$$"     3      .    .      P  \n'+
+ '  *     .           $       """        b    .      .    J   \n'+
+ '   ".  .          .P                    %. .        .  @    \n'+
+ '     %.         z*"                      ^%.        .r"     \n'+
+ '        "*==*""                             ^"*==*""        \n',
+ 
+ '                                           $"   *.          \n'+
+ '               d$$$$$$$P"                  $    J           \n'+
+ '                   ^$.                     4r  "            \n'+
+ '                   d"b                    .db               \n'+
+ '                  P   $                  e" $               \n'+
+ '         ..ec.. ."     *.              zP   $.zec..         \n'+
+ '     .^  .     3*b.     *.           .P" .@"4F   .  "4      \n'+
+ '   ."     .   d"  ^b.    *c        .$"  d"   $   .     %    \n'+
+ '  /       .  P      $.    "c      d"   @     3r  .      3   \n'+
+ ' 4        .eE........$r===e$$$$eeP    J       *...       b  \n'+
+ ' $       $$$$$       $   4$$$$$$$     F.......d$$$.      4  \n'+
+ ' $    ...$$$$$       $   4$$$$$$$     L      .*$$$"......4  \n'+
+ ' 4 ...     "  .   ""3P ===$$$$$$"     3      .           P  \n'+
+ '  *           .     $       """        b     .          J   \n'+
+ '   ".          .  .P                    %.   .         @    \n'+
+ '     %.         z*"                      ^%. .      .r"     \n'+
+ '        "*==*""                             ^"*==*""        \n',
+ 
+ "                                                            \n"+
+ "                        .oOOOOOOo.                          \n"+
+ "                        oOOOOOOOOOOo.                       \n"+
+ "                       OOOO'    'OOOO.                      \n"+
+ "                      OOOO'      'OOOO                      \n"+
+ "                      OOOO       .OOOO                      \n"+
+ "                               .OOOO'                       \n"+
+ "                              .OOOO'                        \n"+
+ "                            .OOOO'                          \n"+
+ "                           .OOOO'                           \n"+
+ "                           OOOO'                            \n"+
+ "                           OOOO                             \n"+
+ "                           OOOO                             \n"+
+ "                                                            \n"+
+ "                           .OO.                             \n"+
+ "                           OOOO                             \n"+
+ "                           'OO''                            \n"
+ ];
+
+	var i = 0;
+
+	window.onload = function() {
+		render();
+		setInterval(render, 500);
+	}
+
+	function render() {
+		var a = document.getElementById('audio');
+		var b = document.getElementById('bicycle');
+		if (a.currentTime % (a.duration / 4) > (a.duration / 8))
+			b.innerHTML = frames[2];
+		else
+			b.innerHTML = frames[(i++)%2];
+	}
+
+	</script>
+
+</head>
+
+<body>
+
+	<div id='title'><h1>1E Movie Cabal Presents:</h1></div>
+
+	<pre id='bicycle'></pre>
+
+	<div id='caption'>
+		<h2>The Bicycle Thief</h2>
+		Saturday October 27, 8PM
+	</div>
+
+	<audio id='audio' autoplay loop src='ibm.wav'></audio>
+
+</body>
+
+</html>

@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>1E Movie Cabal Presents</title>
+
+	<style>
+	html {
+		width: 600px;
+		margin: auto;
+		background: #000000;
+		color: #bbb;
+		font-family: "Menlo", "Courier New", monospace;
+	}
+
+	#container {
+		width: 600px;
+		height: 400px;
+	}
+
+	#secret {
+		width: 600px;
+		height: 400px;
+		display: none;
+	}
+
+	</style>
+
+	<script src="three.min.js"></script>
+
+	<script>
+
+	var canvas, scene, camera, bgScene, bgCamera, renderer, is_gl, container, composer;
+
+	var earth, sun, moon, sunorb, stars;
+
+	var load_time;
+
+	function init() {
+
+		load_time = Date.now();
+
+		container = document.getElementById("container");
+		
+		scene = new THREE.Scene();
+		scene.fog = new THREE.Fog( 0x000000, 3500, 15000 );
+		scene.fog.color.setHSV( 0.51, 0.6, 0.025 );
+		camera = new THREE.PerspectiveCamera(45, 1.5, 1, 15000);
+		camera.position.z = 20;
+		camera.rotation.z = 0.5;
+
+		// background scene (to draw background image)
+		bgScene = new THREE.Scene();
+		bgCamera = new THREE.Camera();
+		bgScene.add(bgCamera);
+
+		try {
+			renderer = new THREE.WebGLRenderer({antialias: true, maxLights: 8, precision: "highp", alpha: true });
+			is_gl = true;
+		} catch (e) {
+			renderer = new THREE.CanvasRenderer({antialias: true});
+			is_gl = false;
+		}
+		renderer.setSize(600, 400);
+		renderer.setClearColor( scene.fog.color, 1 );
+
+		// need this for lens flare
+		container.appendChild( renderer.domElement );
+
+		renderer.gammaInput = true;
+		renderer.gammaOutput = true;
+		renderer.physicallyBasedShading = true;
+
+		// textures
+		var texture1 = THREE.ImageUtils.loadTexture('land_ocean_ice_cloud_2048.jpg');
+		var texture2 = THREE.ImageUtils.loadTexture('moon.jpg');
+		var texture3 = THREE.ImageUtils.loadTexture('sun.jpg');
+		var texture4 = THREE.ImageUtils.loadTexture('stars.jpg');
+
+		var geometry = new THREE.SphereGeometry(10.0, 100, 100);
+		var material = new THREE.MeshPhongMaterial({map: texture1, specular: 0xffffff, shininess: 20, perPixel: true, shading: THREE.SmoothShading, overdraw: !is_gl});
+
+		earth = new THREE.Mesh(geometry, material);
+		earth.position.x = 10;
+		scene.add(earth);
+
+		geometry = new THREE.SphereGeometry(2.0, 50, 50);
+		material = new THREE.MeshPhongMaterial({map: texture2, specular: 0xffffff, shininess: 20, perPixel: true, shading: THREE.SmoothShading, overdraw: !is_gl});
+
+		moon = new THREE.Mesh(geometry, material);
+		scene.add(moon);
+
+		geometry = new THREE.SphereGeometry(2.0, 50, 50);
+		material = new THREE.MeshPhongMaterial({map: texture3, specular: 0xffffff, shininess: 1, perPixel: true, shading: THREE.SmoothShading, overdraw: !is_gl});
+
+		sunorb = new THREE.Mesh(geometry,material);
+		sunorb.position.z = -20;
+		scene.add(sunorb);
+
+		sun = new THREE.PointLight(0xffcc88,1);
+		sun.position.z = -10;
+		sun.position.x = -10;
+		scene.add(sun);
+
+		scene.add(new THREE.AmbientLight(0x222222));
+
+		// background image
+		geometry = new THREE.PlaneGeometry(2, 2, 0);
+		material = new THREE.MeshBasicMaterial({map: texture4});
+		stars = new THREE.Mesh(geometry,material);
+		stars.material.depthTest = false;
+		stars.material.depthWrite = false;
+		bgScene.add(stars);
+
+		// lens flares (shamelessly stolen from some place)
+
+		var textureFlare0 = THREE.ImageUtils.loadTexture( "lensflare0.png" );
+		var textureFlare2 = THREE.ImageUtils.loadTexture( "lensflare2.png" );
+		var textureFlare3 = THREE.ImageUtils.loadTexture( "lensflare3.png" );
+
+		function addLight( h, s, v, x, y, z ) {
+
+			var light = new THREE.PointLight( 0xffffff, 1.5);
+			light.position.set( x, y, z );
+			scene.add( light );
+
+			light.color.setHSV( h, s, v );
+
+			var flareColor = new THREE.Color( 0xffffff );
+			flareColor.copy( light.color );
+			THREE.ColorUtils.adjustHSV( flareColor, 0, -0.5, 0.5 );
+
+			var scale = 2.5;
+
+			var lensFlare = new THREE.LensFlare( textureFlare0, scale * 700, 0.0, THREE.AdditiveBlending, flareColor );
+			
+			lensFlare.add( textureFlare2, scale * 512, 0.0, THREE.AdditiveBlending );
+			lensFlare.add( textureFlare2, scale * 512, 0.0, THREE.AdditiveBlending );
+			lensFlare.add( textureFlare2, scale * 512, 0.0, THREE.AdditiveBlending );
+
+			lensFlare.add( textureFlare3, scale * 60, 0.6, THREE.AdditiveBlending );
+			lensFlare.add( textureFlare3, scale * 70, 0.7, THREE.AdditiveBlending );
+			lensFlare.add( textureFlare3, scale * 120, 0.9, THREE.AdditiveBlending );
+			lensFlare.add( textureFlare3, scale * 70, 1.0, THREE.AdditiveBlending );
+			
+			lensFlare.position = light.position;
+
+			scene.add( lensFlare );
+
+		}
+
+		addLight( 0.6, 0.825, 0.99, 0, 0, -10 );
+	}
+
+	function render() {
+		if (is_gl) {
+			requestAnimationFrame(render);
+			var timer = (Date.now() - load_time) * 0.0001;
+		} else {
+			// Do a single render at a time that looks good
+			var timer = 135295058.27150002;
+		}
+
+		var speedup = 3.5;
+
+		moon.position.x = 15 * Math.sin(speedup * timer + Math.PI / 2) + 10;
+		moon.position.z = 8 * Math.cos(speedup * timer + Math.PI / 2);
+
+		earth.rotation.y = speedup * timer;
+
+		renderer.autoClear = false;
+		renderer.clear();
+		renderer.render(bgScene, bgCamera);
+		renderer.render(scene, camera);
+	}
+
+	var flicker_mode = 0;
+	var flicker_count = 20;
+	var secret_save;
+
+	function skrt_msg() {
+		if (flicker_count > 0) {
+			flicker_count -= 1;
+			if (flicker_count % 2 == flicker_mode)
+				show_skrt();
+			else
+				hide_skrt();
+			setTimeout(skrt_msg, Math.random() * 200);
+		} else {
+			var secret = document.getElementById("secret_text");
+			secret_save = secret.innerHTML;
+			secret.innerHTML = "";
+			write_secret_line("cabal@computer$ ./chuck\n"+
+"Welcome to CHUCK v1.2! Today's trivia questions are:\n"+
+"1. Who first described the genus Iguana?\n"+
+"> \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Nicolaus Laurenti\x00\x00\x00\x00\x00\x00\x00\n"+
+"2. Give the 17th Fibonacci number:\n"+
+"> \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x001597\x00\x00\x00\x00\x00\x00\x00\n"+
+"3. Who is the greatest film director of all time?\n"+
+"> \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Stanley Kubrick\x00\x00\x00\x00\x00\x00\x00\n"+
+"\n"+
+"Congratulations! You have passed our security clearance protocol.\n Enabling primary interface…\n"+
+"Hello, my name is Chuck. How may I be of service?\n"+
+"> \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00who are you\x00\x00\x00\x00\x00\x00\x00\n"+
+"I am Chuck.\n"+
+"> \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00what are you\x00\x00\x00\x00\x00\x00\x00\n"+
+"I am an iguana.\n"+
+"> \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00okay\x00\x00\x00\x00\x00\x00\x00\n"+
+"I see that you are an admirer of cinematic greatness. \nI have some film recommendations that might interest you.\n Would you like to see them?\n"+
+"> \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00yes\n", function() {
+			flicker_mode = 1;
+			flicker_count = 20;
+			setTimeout(function(){secret.innerHTML = secret_save; skrt_msg()}, 30000);
+});
+
+		}
+	}
+
+	function show_skrt() {
+		var container = document.getElementById("container");
+		var secret = document.getElementById("secret");
+		var audio = document.getElementById("audio");
+		container.style.display = "none";
+		secret.style.display = "block";
+		audio.pause();
+	}
+
+	function hide_skrt() {
+		var container = document.getElementById("container");
+		var secret = document.getElementById("secret");
+		var audio = document.getElementById("audio");
+		secret.style.display = "none";
+		container.style.display = "block";
+		audio.play();
+	}
+
+	function write_secret_line(line, done_callback) {
+		var p = document.getElementById("secret_text");
+		for (var i = 0; i < line.length; i++) {
+			(function(c) {
+				setTimeout(function() {p.innerHTML += c}, 50*i);
+			})(line[i]);
+		}
+		setTimeout(done_callback, 50*line.length / 2.0);
+	}
+
+	window.onload = function() {
+		init();
+		render();
+
+		setTimeout(skrt_msg, 7000);
+	}
+
+	</script>
+
+</head>
+
+<body>
+
+	<div id='title'><h1>1E Movie Cabal Presents:</h1></div>
+
+	<div id='container'></div>
+
+	<div id='secret'>
+		<pre id='secret_text'>
+     
+                
+                          .,;//,
+                       .-"`_`;///,
+                      /._ <|> `\;:.
+                      '._-_  ( )|::,
+                        |;-.    ///:::,.
+                        \ ; .-'  `'':::,.
+                        _'-;          ':::,. 
+                     ,-;--/ /            ':::,._
+                         / /\               ``'.'.
+                    _-,-/ /  '._         _.-'   '.\
+                   ` (,--'      `""--.._(         '.
+                     `                   \    .--'  \
+                                         _)   (      \
+                                    __.-'_._-'`-.     \
+                                   ` (.-`)  `    `\    \
+                                                   '.   \
+                                                     \   \
+                                                      `\  ;
+                                                        | |
+                                                       / /
+                                                  ,__.'.'
+                                                   '--' 
+</pre>
+	</div>
+
+	<div id='caption'>
+		<h2>The Right Stuff</h2>
+		Saturday November 31, 8PM
+	</div>
+
+	<audio id='audio' autoplay loop src='rightstuff.wav'></audio>
+
+</body>
+
+</html>
