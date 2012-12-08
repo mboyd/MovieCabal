@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>1E Movie Cabal Presents</title>
+
+	<style>
+	html {
+		width: 800px;
+		margin: auto;
+		padding: 0;
+		background: #000000;
+		color: #0f0;
+		font-family: "Menlo", "Courier New", monospace;
+	}
+
+	body {
+		margin: 0;
+	}
+
+	#system {
+		width: 398px;
+		height: 267px;
+		margin: 0;
+		padding: 0;
+		float: left;
+		border: 1px solid green;
+	}
+
+	#eclipse {
+		width: 398px;
+		height: 267px;
+		margin: 0;
+		padding: 0;
+		float: right;
+		border: 1px solid green;
+	}
+
+	#sine {
+		position: relative;
+		top: 20px;
+		margin: 20px 0;
+		width: 798px;
+		height: 100px;
+		border: 1px solid green;
+		clear: both;
+	}
+
+	#secret {
+		width: 800px;
+		height: 800px;
+		display: none;
+	}
+
+	#caption {
+		position: relative;
+		top: 20px;
+	}
+
+	</style>
+
+	<script src="d3.v2.min.js"></script>
+
+	<script src="sine.js"></script>
+	<script src="eclipse.js"></script>
+	<script src="system.js"></script>
+
+	<script>
+	var flicker_mode = 0;
+	var flicker_count = 5;
+	var secret_save;
+
+	function skrt_msg() {
+		if (flicker_count > 0) {
+			flicker_count -= 1;
+			if (flicker_count % 2 == flicker_mode)
+				show_skrt();
+			else
+				hide_skrt();
+			setTimeout(skrt_msg, Math.random() * 100);
+		} else {
+			hide_skrt();
+			return;
+
+			var secret = document.getElementById("secret_text");
+			secret_save = secret.innerHTML;
+			secret.innerHTML = "";
+			write_secret_line("cabal@computer$ ./chuck\n", function() {
+				flicker_mode = 1;
+				flicker_count = 20;
+				setTimeout(function(){secret.innerHTML = secret_save; skrt_msg()}, 30000);
+			});
+		}
+	}
+
+	function show_skrt() {
+		var container = document.getElementById("main");
+		var secret = document.getElementById("secret");
+		var audio = document.getElementById("audio");
+		container.style.display = "none";
+		secret.style.display = "block";
+		//audio.pause();
+	}
+
+	function hide_skrt() {
+		var container = document.getElementById("main");
+		var secret = document.getElementById("secret");
+		var audio = document.getElementById("audio");
+		secret.style.display = "none";
+		container.style.display = "block";
+		//audio.play();
+	}
+
+	function write_secret_line(line, done_callback) {
+		var p = document.getElementById("secret_text");
+		for (var i = 0; i < line.length; i++) {
+			(function(c) {
+				setTimeout(function() {p.innerHTML += c}, 50*i);
+			})(line[i]);
+		}
+		setTimeout(done_callback, 50*line.length / 2.0);
+	}
+
+	window.onload = function() {
+		makeSystem("system");
+		makeEclipse("eclipse");
+		makeSine("#sine", 798, 75);
+
+		setTimeout(skrt_msg, 1000);
+	}
+
+	</script>
+
+</head>
+
+<body>
+
+	<div id='title'><h1>1E Movie Cabal Presents:</h1></div>
+
+	<div id="main">
+		<canvas id='system' width=600 height=400></canvas>
+		<canvas id='eclipse' width=600 height=400></canvas>
+		<div id="sine"></div>
+	</div>
+
+	<div id='secret'>
+		<pre id='secret_text'>
+                    
+                               
+                                         .,;//,
+                                      .-"`_`;///,
+                                     /._ <|> `\;:.
+                                     '._-_  ( )|::,
+                                       |;-.    ///:::,.
+                                       \ ; .-'  `'':::,.
+                                       _'-;          ':::,. 
+                                    ,-;--/ /            ':::,._
+                                        / /\               ``'.'.
+                                   _-,-/ /  '._         _.-'   '.\
+                                  ` (,--'      `""--.._(         '.
+                                    `                   \    .--'  \
+                                                        _)   (      \
+                                                   __.-'_._-'`-.     \
+                                                  ` (.-`)  `    `\    \
+                                                                  '.   \
+                                                                    \   \
+                                                                     `\  ;
+                                                                       | |
+                                                                      / /
+                                                                 ,__.'.'
+                                                                  '--' 
+</pre>
+	</div>
+
+	<div id='caption'>
+		<h2>Solyaris</h2>
+		Saturday December 8, 8PM
+	</div>
+
+	<audio id='audio' autoplay loop src='BWV639.wav'></audio>
+
+</body>
+
+</html>
