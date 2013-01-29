@@ -1,0 +1,129 @@
+<!Doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>1E Movie Cabal Presents</title>
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+	<style>
+	html {
+		width: 800px;
+		margin: auto;
+		font-family: "Menlo", "Courier New", monospace;
+	}
+
+	.monty_hall {
+		overflow: auto;
+		margin: auto;
+	}
+
+	.door {
+		float: left;
+		width: 200px;
+		height: 340px;
+		margin: 20px;
+		background: #666;
+		border: 1px solid black;
+	}
+
+	.door_contents {
+		display: none;
+		width: 200px;
+		height: 340px;
+	}
+
+	.doorknob {
+		position: relative;
+		top: 150px;
+		left: 10px;
+		width: 15px;
+		height: 15px;
+		border-radius: 7px;
+		background: black;
+	}
+
+	.door.open > .doorknob {
+		display: none;
+	}
+
+	.door.open {
+		background: none;
+	}
+
+	.door.open > .door_contents.iguana {
+		display: block;
+		background: url("iguana.jpg") top no-repeat;
+		background-size: contain;
+	}
+
+	.door.open > .door_contents.python {
+		display: block;
+		background: url("python.jpg") top no-repeat;
+		background-size: contain;
+	}
+
+	#caption {
+		clear: both;
+	}
+	</style>
+</head>
+
+<body>
+
+	<div id='title'><h1>1E Movie Cabal Presents:</h1></div>
+
+	<div id='monty_hall'>
+
+		<div id='door1' class='door' data-doornum=1>
+			<div class='doorknob'></div>
+			<div id='door1_contents' class='door_contents iguana'></div>
+		</div>
+
+		<div id='door2' class='door' data-doornum=2>
+			<div class='doorknob'></div>
+			<div id='door2_contents' class='door_contents iguana'></div>
+		</div>
+
+		<div id='door3' class='door' data-doornum=3>
+			<div class='doorknob'></div>
+			<div id='door3_contents' class='door_contents iguana'></div>
+		</div>
+
+	</div>
+
+	<div id='caption'>
+		<h2>Brazil and Monty Python's Life of Brian</h2>
+		Saturday January 12, 8PM
+	</div>
+
+	<script>
+	var n_doors = 3;
+
+	var r = Math.floor(Math.random() * 3) + 1;
+	$('#door'+r+' .door_contents').removeClass('iguana');
+	$('#door'+r+' .door_contents').addClass('python');
+
+	$('.door').click(function(e) {
+		var i = $(this).data('doornum');
+		var d = Math.round(Math.random() + 1);
+		var j = 1 + (Math.round(i - 1 + d) % n_doors);
+
+		if ($('#door'+j+' .door_contents').hasClass('python')) {
+			d = (d == 1) ? 2 : 1;
+			var j = 1 + (Math.round(i - 1 + d) % n_doors);
+		}
+
+		$('#door'+j).addClass('open');
+
+		$('.door').unbind('click');
+		$('.door').click(function(e) {
+			$(this).addClass('open');
+			$('.door').unbind('click');
+		});
+	});
+	</script>
+
+</body>
+
+</html>
