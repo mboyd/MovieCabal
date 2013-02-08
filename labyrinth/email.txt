@@ -1,0 +1,11 @@
+1E MOVIE CABAL FOREIGN FILM SERIES
+
+Film #: -1
+Name: PANS LABYRINTH
+Size: 21622
+Weight: 3.2e7
+Flavor: 0xFF69AB44
+Cardinality: http://web.mit.edu/mboyd/www/labyrinth/labyrinth.html
+
+Slap that baby,
+1E Movie Cabal

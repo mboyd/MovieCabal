@@ -1,0 +1,435 @@
+<!Doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>1E Movie Cabal Presents</title>
+
+	<style>
+	html {
+		width: 700px;
+		margin: auto;
+		font-family: "Menlo", "Courier New", monospace;
+		color: #96aeef;
+		background: #2b4281;
+	}
+
+	table#labyrinth {
+		border-spacing: 0;
+		margin: auto;
+	}
+
+	td {
+		width: 50px;
+		height: 50px;
+		border: 1px solid #96aeef;
+		margin: 0;
+		padding: 0;
+
+		transition: border-color 1.0s ease;
+	}
+
+	td.lizard:before {
+		width: 100%;
+		height: 100%;
+		content: "";
+		display: block;
+		background-image: url(iguana.png);
+		background-size: 50px 50px;
+
+		-webkit-transition: -webkit-transform 0.2s ease;
+		-moz-transition: -moz-transform 0.2s ease;
+	}
+
+	.dir_n td.lizard:before {
+		-webkit-transform: rotate(-90deg);
+		-moz-transform: rotate(-90deg);
+	}
+
+	.dir_s td.lizard:before {
+		-webkit-transform: rotate(90deg);
+		-moz-transform: rotate(90deg);
+	}
+
+	.dir_e td.lizard:before {
+		-webkit-transform: rotate(0deg);
+		-moz-transform: rotate(0deg);
+	}
+
+	.dir_w td.lizard:before {
+		-webkit-transform: rotateY(180deg);
+		-moz-transform: rotateY(180deg);
+	}
+
+	.dir_n td.lizard.move:before {
+		-webkit-transform: translateY(-50px) rotate(-90deg);
+		-moz-transform: translateY(-50px) rotate(-90deg);
+	}
+
+	.dir_s td.lizard.move:before {
+		-webkit-transform: translateY(50px) rotate(90deg);
+		-moz-transform: translateY(50px) rotate(90deg);
+	}
+
+	.dir_e td.lizard.move:before {
+		-webkit-transform: translateX(50px) rotate(0deg);
+		-moz-transform: translateX(50px) rotate(0deg);
+	}
+
+	.dir_w td.lizard.move:before {
+		-webkit-transform: translateX(-50px) rotateY(180deg);
+		-moz-transform: translateX(-50px) rotateY(180deg);
+	}
+
+	td:nth-child(1) {
+		border-left-width: 2px;
+	}
+
+	td:nth-child(10) {
+		border-right-width: 2px;
+	}
+
+	tr:nth-child(1) td {
+		border-top-width: 2px;
+	}
+
+	tr:nth-child(10) td {
+		border-bottom-width: 2px;
+	}
+
+	td.cr {
+		border-right-color: rgba(0, 0, 0, 0.0);
+	}
+
+	td.cl {
+		border-left-color: rgba(0, 0, 0, 0.0);
+	}
+
+	td.ct {
+		border-top-color: rgba(0, 0, 0, 0.0);
+	}
+
+	td.cb {
+		border-bottom-color: rgba(0, 0, 0, 0.0);
+	}
+	</style>
+
+	<script>
+
+var Dir = {
+	rows : 10, cols : 10,
+	N : 0, S : 1, W : 2, E : 3,
+	drow : [-1, 1, 0, 0],
+	dcol : [0, 0, -1, 1],
+	inverse_dir : [1, 0, 3, 2],
+	connect_class : ["ct", "cb", "cl", "cr"],
+	dir_class : ["dir_n", "dir_s", "dir_w", "dir_e"]
+};
+
+function getCell(row, col) {
+	if (row < 0 || col < 0) {
+		return null;
+	}
+
+	row += 1, col += 1;	// Convert for nth-child
+	return document.querySelector("table#labyrinth tr:nth-child("+row+")" +
+		" td:nth-child("+col+")");
+}
+
+function connectAdjacent(row, col, dir) {
+	var cell1 = getCell(row, col);
+	var cell2 = getCell(row + Dir.drow[dir], col + Dir.dcol[dir]);
+
+	if (cell1 && cell2) {
+		cell1.classList.add(Dir.connect_class[dir]);
+		cell2.classList.add(Dir.connect_class[Dir.inverse_dir[dir]]);
+	}
+}
+
+function resetMaze() {
+	var nodeList = document.querySelectorAll("table#labyrinth td");
+	for (var i = 0; i < nodeList.length; i++) {
+		Dir.connect_class.map(function(c) {
+			nodeList[i].classList.remove(c);
+		});
+	}
+}
+
+function makeMaze() {
+	queue = [];
+	visited = [];
+	while (visited.push(false) < (Dir.rows * Dir.cols)) ;
+
+	queue.push({row : Math.round(Math.random() * Dir.rows), 
+				col : Math.round(Math.random() * Dir.cols)});
+
+	while (queue.length > 0) {
+		var c = queue[queue.length - 1];
+		visited[c.row * Dir.cols + c.col] = true;
+		var cell = getCell(c.row, c.col);
+
+		var foundNeighbor = false;
+
+		var d = d = Math.round(Math.random() * 4);
+
+		for (var i = 0; i < 4; i++) {
+			d = (d + 1) % 4;
+
+			var n = {row : c.row + Dir.drow[d], col : c.col + Dir.dcol[d]};
+			var neighbor = getCell(n.row, n.col);
+
+			if (neighbor && ! visited[n.row * Dir.cols + n.col]) {
+				foundNeighbor = true;
+
+				connectAdjacent(c.row, c.col, d);
+				queue.push(n);
+				break;
+			}
+
+		}
+
+		if (!foundNeighbor) {
+			queue.pop();
+		}
+	}
+}
+
+var player = {
+	row : 0,
+	col : 0,
+	dir : 2,
+	moving : false
+};
+
+function setPlayerDir(dir) {
+	table = document.getElementById("labyrinth");
+	
+	table.classList.remove(Dir.dir_class[player.dir]);
+	table.classList.add(Dir.dir_class[dir]);
+
+	player.dir = dir;
+}
+
+function movePlayer(dir) {
+	var cell = getCell(player.row, player.col);
+	var target = getCell(player.row + Dir.drow[dir], player.col + Dir.dcol[dir]);
+	
+	if (target && cell.classList.contains(Dir.connect_class[dir])) {
+		cell.classList.add("move");
+		
+		setTimeout(function() {
+			cell.classList.remove("move");
+			cell.classList.remove("lizard");
+			player.row += Dir.drow[dir];
+			player.col += Dir.dcol[dir];
+			player.cell = target;
+			target.classList.add("lizard");
+
+			player.moving = false;
+		}, 200);
+	} else {
+		player.moving = false;
+	}
+}
+
+function doMove(dir) {
+	if (player.moving) {
+		return;
+	}
+
+	player.moving = true;
+
+	if (player.dir != dir) {
+		setPlayerDir(dir);
+		setTimeout(function() {
+			movePlayer(dir);
+		}, 200);
+	} else {
+		movePlayer(dir);
+	}
+}
+
+document.onkeydown = function(e) {
+	switch (e.keyCode) {
+		case 37:
+			doMove(Dir.W);
+			return false;
+		case 38:
+			doMove(Dir.N);
+			return false;
+		case 39:
+			doMove(Dir.E);
+			return false;
+		case 40:
+			doMove(Dir.S);
+			return false;
+		default:
+			return true;
+	}
+}
+
+window.onload = function() {
+	setTimeout(function() {
+		makeMaze();
+
+		setInterval(function() { 
+			if (document.hidden) {
+				console.log("hidden");
+				return;
+			}
+			resetMaze();
+			makeMaze();
+		}, 2000);
+
+	}, 500);
+}
+
+	</script>
+
+</head>
+
+<body>
+
+	<div id='content'>
+		<div id='title'><h1>1E Movie Cabal Presents:</h1></div>
+
+		<table id='labyrinth'>
+			<tr>
+				<td class="lizard"></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+		</table>
+
+		<div id='caption'>
+			<h2>Pan's Labyrinth</h2>
+			Saturday February 9, 8PM
+		</div>
+	</div>
+
+</body>
+
+</html>
